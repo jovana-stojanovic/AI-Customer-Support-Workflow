@@ -4,7 +4,7 @@ An AI-powered customer support automation workflow built with **n8n** and **Goog
 
 ## Workflow Overview
 
-![Workflow Overview](screenshots/workflow-overview.png)
+![Workflow Overview](screenshots/workflow-screenshot.png)
 
 ## Features
 
