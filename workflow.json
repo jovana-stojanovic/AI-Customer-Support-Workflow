@@ -1,0 +1,494 @@
+{
+  "name": "Galeb Group - prakticni zadatak",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Kontaktirajte nas",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Ime i prezime",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Poruka",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b66e14e2-bb57-46be-9110-336be329a441",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -256,
+        96
+      ],
+      "webhookId": "1efdaf25-74da-4846-91ae-e1e7cdb8f0cc"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ime i prezime: {{ $json[\"Ime i prezime\"] }}\nEmail: {{ $json.Email }}\n\nPoruka:\n{{ $json.Poruka }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Ti si asistent za obradu i klasifikaciju korisnickih zahteva poslatih putem forme.\nAnaliziraj poruku klijenta i vrati:\n1. Kategoriju: isključivo Prodaja, Servis ili Ostalo.\n2. Prioritet: isključivo Hitan zahtev ili Redovan zahtev.\n3. Kratak, profesionalan predlog odgovora na srpskom jeziku.\nPrioritet odredi na osnovu hitnosti problema i posledica po poslovanje klijenta, a ne samo na osnovu ključnih reči. Nemoj izmišljati informacije o kompaniji niti obećavati rokove koji nisu navedeni.\nVrati rezultate u strukturiranom formatu kako bi mogli da se sačuvaju u tabeli."
+        }
+      },
+      "id": "0c3def8c-06fa-425b-aab6-af7f51d912db",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        0,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "id": "4bc01c9c-d187-4fcf-8d79-1359d3725905",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        304
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dz18Y1WRShvMwM5A",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"kategorija\": { \"type\": \"string\", \"enum\": [\"Prodaja\",\"Servis\",\"Ostalo\"] },\n    \"prioritet\": { \"type\": \"string\", \"enum\": [\"Hitan zahtev\",\"Redovan zahtev\"] },\n    \"predlog_odgovora\": { \"type\": \"string\", \"description\": \"Kratak, profesionalan predlog odgovora klijentu na srpskom.\" }\n  },\n  \"required\": [\"kategorija\", \"prioritet\", \"predlog_odgovora\"]\n}"
+      },
+      "id": "a00c09fe-9068-4156-95ec-7a64e3319d0c",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bhy5HpLCI1PkZiooI921j4n77EUKvOuAnCZgJTtOqTY",
+          "mode": "list",
+          "cachedResultName": "Zahtevi sa forme",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bhy5HpLCI1PkZiooI921j4n77EUKvOuAnCZgJTtOqTY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Hitni zahtevi",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bhy5HpLCI1PkZiooI921j4n77EUKvOuAnCZgJTtOqTY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ime_prezime": "={{ $('On form submission').item.json['Ime i prezime'] }}",
+            "email": "={{ $('On form submission').item.json.Email }}",
+            "poruka": "={{ $('On form submission').item.json.Poruka }}",
+            "kategorija": "={{ $json.output.kategorija }}",
+            "prioritet": "={{ $json.output.prioritet }}",
+            "primljeno": "={{ $('On form submission').item.json.submittedAt }}",
+            "predlog_odgovora": "={{ $json.output.predlog_odgovora }}",
+            "status": "Čeka hitnu obradu"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ime_prezime",
+              "displayName": "ime_prezime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "poruka",
+              "displayName": "poruka",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "kategorija",
+              "displayName": "kategorija",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "prioritet",
+              "displayName": "prioritet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "primljeno",
+              "displayName": "primljeno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "predlog_odgovora",
+              "displayName": "predlog_odgovora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "b1c588ac-b095-40ec-8bb1-1a203c2d2aac",
+      "name": "Evidentiraj hitne zahteve",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gpkefbt5GOXK76dH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bhy5HpLCI1PkZiooI921j4n77EUKvOuAnCZgJTtOqTY",
+          "mode": "list",
+          "cachedResultName": "Zahtevi sa forme",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bhy5HpLCI1PkZiooI921j4n77EUKvOuAnCZgJTtOqTY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1588107790,
+          "mode": "list",
+          "cachedResultName": "Redovni zahtevi",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bhy5HpLCI1PkZiooI921j4n77EUKvOuAnCZgJTtOqTY/edit#gid=1588107790"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ime_prezime": "={{ $('On form submission').item.json['Ime i prezime'] }}",
+            "email": "={{ $('On form submission').item.json.Email }}",
+            "poruka": "={{ $('On form submission').item.json.Poruka }}",
+            "kategorija": "={{ $json.output.kategorija }}",
+            "prioritet": "={{ $json.output.prioritet }}",
+            "primljeno": "={{ $('On form submission').item.json.submittedAt }}",
+            "predlog_odgovora": "={{ $json.output.predlog_odgovora }}",
+            "status": "Čeka obradu"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "ime_prezime",
+              "displayName": "ime_prezime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "poruka",
+              "displayName": "poruka",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "kategorija",
+              "displayName": "kategorija",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prioritet",
+              "displayName": "prioritet",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "primljeno",
+              "displayName": "primljeno",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "predlog_odgovora",
+              "displayName": "predlog_odgovora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        576,
+        256
+      ],
+      "id": "bb70286e-8aac-4235-8292-b005efc50fa8",
+      "name": "Evidentiraj redovne zahteve",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "gpkefbt5GOXK76dH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "tania88@ethereal.email",
+        "toEmail": "podrska@galeb.rs",
+        "subject": "=HITNO – Novi zahtev (Kategorija: {{ $json.kategorija }})",
+        "emailFormat": "text",
+        "text": "=Poštovani,\n\nPrimljen je novi zahtev koji je automatski označen kao HITAN.\n\nDetalji zahteva:\n\nKlijent: {{ $json.ime_prezime }}\n\nE-mail: {{ $json.email }}\n\nKategorija: {{ $json.kategorija }}\n\nPrioritet: {{ $json.prioritet }}\n\nTekst upita: {{ $json.poruka }}\n\nPredlog odgovora klijentu:\n{{ $json.predlog_odgovora }}\n\nMolimo vas da zahtev uzmete u prioritetnu obradu.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        832,
+        -32
+      ],
+      "id": "0718ed97-693b-4248-bec4-a79dc0c232b8",
+      "name": "Posalji interno obavestenje",
+      "webhookId": "20edf0c0-40ea-4b2f-999b-89ce729bae73",
+      "credentials": {
+        "smtp": {
+          "id": "nIFmYIAGXWW23Vrn",
+          "name": "SMTP account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "e17c3cd1-2ff9-490c-9987-1b3136f85e73",
+              "leftValue": "={{ $json.output.prioritet }}",
+              "rightValue": "Hitan zahtev",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        320,
+        96
+      ],
+      "id": "5331bea8-eb98-41be-ace8-6108ef9bc740",
+      "name": "hitan zahtev?"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "hitan zahtev?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evidentiraj hitne zahteve": {
+      "main": [
+        [
+          {
+            "node": "Posalji interno obavestenje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hitan zahtev?": {
+      "main": [
+        [
+          {
+            "node": "Evidentiraj hitne zahteve",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Evidentiraj redovne zahteve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "771bd177-5609-4604-a981-c0426453fbed",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1fdbc2dd7f5d12a58773d8ad4bca4f14af92be19b9bcfeb2eb7e7c531563d3fc"
+  },
+  "nodeGroups": [],
+  "id": "tWIfK8Cm7JRiJv1b",
+  "tags": []
+}
